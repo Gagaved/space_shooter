@@ -156,7 +156,7 @@ let playerShoots = [];
 let enemyesShoots = [];
 let enemyes = [];
 for (let i = 0; i < 50; i++) {
-    let star = new Star('Textures/Star.png', getRandomInt(600), getRandomInt(800));
+    let star = new Star('Textures/star.png', getRandomInt(600), getRandomInt(800));
     arrayStars.push(star);
 }
 
