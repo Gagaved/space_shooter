@@ -2,19 +2,30 @@ var canvas = document.getElementById("myCanvas");
 var ctx = canvas.getContext("2d");
 let WIDTH = canvas.width;
 let HEIGHT = canvas.height;
-
+let score = 0;
+let healthBar = "❤️❤️❤️"
+let arrayStars = [];
+let playerShoots = [];
+let enemyesShoots = [];
+let enemyes = [];
 function getRandomInt(max) {
     return Math.floor(Math.random() * max);
 }
+function drawScore() {
+    ctx.font = "24px Arial";
+    ctx.fillStyle = "#0095DD";
+    ctx.fillText("Score: "+score, 20, 30);
+}
 class Model {
-    constructor(spriteWay, yPosition, xPosition, width, height) {
+    constructor(spriteWay, xPosition, yPosition, width, height,health) {
+        this.health = health;
         this.width = width;
         this.height = height;
         this.spriteImg = new Image();
         this.spriteImg.src = spriteWay;
         this.position = {
-            x: yPosition,
-            y: xPosition,
+            x: xPosition,
+            y: yPosition,
         };
     }
     draw(ctx) {
@@ -23,33 +34,31 @@ class Model {
 }
 class Player extends Model {
     constructor(spriteWay, xPosition, yPosition) {
-        super(spriteWay, xPosition, yPosition, 64, 64);
-        this.hitBox = [64, 64];
+        super(spriteWay, xPosition, yPosition, 64, 64, 3);
         this.shootingPosition = {
             x: this.width/2 - 4,
             y: 0,
         }
     }
     move(dx, dy) {
-        if ((this.position.x + dx) < WIDTH && (this.position.x + dx) > 0) {
+        if ((this.position.x + dx) < WIDTH-64 && (this.position.x + dx) > 0) {
             this.position.x += dx;
         }
-        if ((this.position.y + dy) < HEIGHT && (this.position.y + dy) > 0) {
+        if ((this.position.y + dy) < HEIGHT-64 && (this.position.y + dy) > 0) {
             this.position.y += dy;
         }
     }
 }
 class Enemy extends Model{
     constructor(spriteWay, xPosition = (WIDTH/2), yPosition = -50) {
-        super(spriteWay, xPosition, yPosition, 50, 50);
+        super(spriteWay, xPosition, yPosition, 64, 64,1);
         this.shootingTimer = 0;
         this.vector = {
             xVector: 1,
             yVector: 1,
         }
-        this.hitBox = [64, 64];
         this.shootingPosition = {
-            x: this.width/2 - 4,
+            x: this.width/2,
             y: this.height,
         }
     }
@@ -57,24 +66,74 @@ class Enemy extends Model{
             if(this.position.y < 0){
                 this.vector.yVector = 1;
             }
-            if (this.position.y< HEIGHT/3){
-                this.position.y+=2*this.vector.yVector;
-            }else if(this.position.y< HEIGHT/2){
+            if (this.position.y>0 && this.position.y< HEIGHT/3){
+                this.vector.yVector = 1;
+            }else if (getRandomInt(60) == 1){
+                this.vector.yVector = -1;
+            }
+            this.position.y += this.vector.yVector;
+            
+            this.position.x +=this.vector.xVector;
+            if(this.position.x >= WIDTH-this.width || this.position.x<=0){
+                this.vector.xVector *= -1;
+            }
+            if(getRandomInt(120)==1){
+                this.vector.xVector *=-1;
+            }
+        }
+        canShoot(){
+            this.shootingTimer ++;
+            if (this.shootingTimer>100){
+                this.shootingTimer=0;
+            }
+            return (this.shootingTimer <1);
+        }
+        shoot(i){
+            return new BallEnemy("Textures/green_ball.png",(enemyes[i].shootingPosition.x + enemyes[i].position.x),enemyes[i].shootingPosition.y + enemyes[i].position.y);
+        }
+    
+}
+class Boss extends Model{
+    constructor(spriteWay, xPosition = (WIDTH/2), yPosition = -128) {
+        super(spriteWay, xPosition, yPosition, 128, 128,40);
+        this.shootingTimer = 0;
+        this.vector = {
+            xVector: 1,
+            yVector: 1,
+        }
+        this.shootingPosition = {
+            x: this.width/2,
+            y: this.height,
+        }
+    }
+    move() {
+            if(this.position.y < 25){
+                this.vector.yVector = 1;
+            }
+            if (this.position.y< HEIGHT/6){
                 this.position.y+=1*this.vector.yVector;
-            }else{
-                 if (getRandomInt(60) == 1){
-                    this.vector.yVector *= -1;
+            }else {
+                if(getRandomInt(120)==1){
+                    this.vector.yVector =-1;
                 }
-                this.position.y+=1*this.vector.yVector;
             }
             this.position.x +=this.vector.xVector;
             if(this.position.x >= WIDTH-this.width || this.position.x<=0){
                 this.vector.xVector *= -1;
             }
-            if(getRandomInt(60)==1){
-                this.vector.xVector *=-1;
+            if(getRandomInt(120)==1){
+               this.vector.xVector *=-1;
             }
-
+    }
+    canShoot(){
+        this.shootingTimer ++;
+        if (this.shootingTimer>300){
+            this.shootingTimer=0;
+        }
+        return (this.shootingTimer <80);
+    }
+    shoot(i){
+        return new BallEnemy("Textures/green_ball.png",(enemyes[i].shootingPosition.x + enemyes[i].position.x),enemyes[i].shootingPosition.y + enemyes[i].position.y);
     }
 }
 class Star extends Model {
@@ -94,7 +153,6 @@ class BallPlayer extends Model {
     }
     move(dy){
         this.position.y+=dy;
-        this.hitBox = [8,8];
         if (this.position.y <= 0) {
             return true;
         }else{
@@ -135,7 +193,6 @@ function keyDownHandler(e) {
         botPressed = true;
     }
 }
-
 function keyUpHandler(e) {
     if (e.key == "ArrowRight") {
         rightPressed = false;
@@ -147,30 +204,38 @@ function keyUpHandler(e) {
         botPressed = false;
     }
 }
-
 var canvas = document.getElementById("myCanvas");
 var ctx = canvas.getContext("2d");
 player = new Player("Textures/player_spryte.png", 0, 0)
-let arrayStars = [];
-let playerShoots = [];
-let enemyesShoots = [];
-let enemyes = [];
 for (let i = 0; i < 50; i++) {
     let star = new Star('Textures/star.png', getRandomInt(600), getRandomInt(800));
     arrayStars.push(star);
 }
-
 shootTimer = 0;
-function draw() {
-    if(getRandomInt(100) == 1 && enemyes.length <5){
+bossFight = false;
+bossIsCreated = false;
+dy = 2;
+function draw() {;
+    if (score%6 == 5){
+        bossFight = true;
+    }
+    if(!bossIsCreated && bossFight && enemyes.length == 0){
+        bossIsCreated=true;
+        dy = 4;
+        enemyes.push(new Boss("Textures/boss_sprite.png"));
+    }
+    if(bossIsCreated && enemyes.length == 0){
+        bossIsCreated = false;
+        bossFight = false
+    }
+    if(getRandomInt(100) == 1 && enemyes.length <5 &&!bossFight){
         enemyes.push(new Enemy('Textures/en1.png'));
     }
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     shootTimer+=1;
     for (let i = 0;i<enemyes.length;i++){
-        if(enemyes[i].shootingTimer>=210){
-            enemyes[i].shootingTimer=0;
-            enemyesShoots.push(new BallEnemy("Textures/green_ball.png",(enemyes[i].shootingPosition.x + enemyes[i].position.x),enemyes[i].shootingPosition.y + enemyes[i].position.y))
+        if(enemyes[i].canShoot()){
+            enemyesShoots.push(enemyes[i].shoot(i));
         }
     }
     if (shootTimer == 35){
@@ -182,8 +247,12 @@ function draw() {
         flag = false;
         for(let en = 0; en<enemyes.length && !flag;en++){
             if (playerShoots[i].position.x > enemyes[en].position.x && playerShoots[i].position.x < enemyes[en].position.x+enemyes[en].width && playerShoots[i].position.y > enemyes[en].position.y && playerShoots[i].position.y < enemyes[en].position.y+enemyes[en].height){
-                    enemyes.splice(en,1);
-                    en--
+                    enemyes[en].health--;
+                    if(enemyes[en].health <=0){
+                        enemyes.splice(en,1);
+                        en--
+                        score++;
+                    }
                     playerShoots.splice(i,1);
                     i--
                     flag = true;
@@ -192,16 +261,16 @@ function draw() {
     }
     ctx.beginPath();
     if (rightPressed) {
-        player.move(7, 0);
+        player.move(5, 0);
     }
     if (leftPressed) {
-        player.move(-7, 0);
+        player.move(-5, 0);
     }
     if (topPressed) {
-        player.move(0, -7);
+        player.move(0, -5);
     }
     if (botPressed) {
-        player.move(0, 7);
+        player.move(0, 5);
     }
     for (let i = 0; i < 50; i++) {
         arrayStars[i].move(1);
@@ -209,7 +278,6 @@ function draw() {
     }
     player.draw(ctx);
     for(let i = 0;i<enemyes.length;i++){
-        enemyes[i].shootingTimer++;
         enemyes[i].move();
         enemyes[i].draw(ctx);
     }
@@ -224,16 +292,27 @@ function draw() {
         }
     }
     for(let i = 0; i<enemyesShoots.length;i++){
-        if (enemyesShoots[i].move()){
+        if (enemyesShoots[i].move(dy)){
             enemyesShoots.splice(i,1);
             i--;
+        }
+        else if (enemyesShoots[i].position.x > player.position.x && enemyesShoots[i].position.x < player.position.x+64 &&
+                enemyesShoots[i].position.y > player.position.y+20 && enemyesShoots[i].position.y < player.position.y+64){
+                    
+                    if(--player.health==0){
+                        gameEnding();
+                    }
+                    healthBar = healthBar.substring(0,healthBar.length-2);
+                    enemyesShoots.splice(i,1);
+                    i--;
         }
         else
         {
             enemyesShoots[i].draw(ctx);
         }
     }
-    
+    ctx.fillText(healthBar, 150, 30);
+    drawScore()     
     ctx.closePath();
 }
 setInterval(draw, 10);
