@@ -414,7 +414,7 @@ function draw() {
             }
         }
         for (let i = 0; i < enemyesShoots.length; i++) {
-            if (enemyesShoots[i].move(2)) {
+            if (enemyesShoots[i].move(4)) {
                 enemyesShoots.splice(i, 1);
                 i--;
             } else if (enemyesShoots[i].position.x > player.position.x && enemyesShoots[i].position.x < player.position.x + 64 &&
