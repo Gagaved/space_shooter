@@ -1,5 +1,7 @@
 var canvas = document.getElementById("myCanvas");
 var ctx = canvas.getContext("2d");
+canvas.height = window.innerHeight;
+canvas.width = 1000;
 let WIDTH = canvas.width;
 let HEIGHT = canvas.height;
 let dx;
@@ -90,7 +92,7 @@ class Player extends Model {
     }
 }
 class Enemy extends Model {
-    constructor(spriteWay, xPosition = (WIDTH / 2), yPosition = -50) {
+    constructor(spriteWay, xPosition = (getRandomInt(WIDTH-65)), yPosition = -20) {
         super(spriteWay, xPosition, yPosition, 64, 64, 1);
         this.shootingTimer = 0;
         this.vector = {
@@ -167,10 +169,10 @@ class Boss extends Model {
     }
     canShoot() {
         this.shootingTimer++;
-        if (this.shootingTimer > 300) {
+        if (this.shootingTimer > 400) {
             this.shootingTimer = 0;
         }
-        return (this.shootingTimer < 80);
+        return (this.shootingTimer < 180);
     }
     shoot(i) {
         return new BallEnemy("Textures/green_ball.png", (enemyes[i].shootingPosition.x + enemyes[i].position.x), enemyes[i].shootingPosition.y + enemyes[i].position.y);
@@ -182,7 +184,7 @@ class Star extends Model {
     }
     move(dy) {
         this.position.y += dy;
-        if (this.position.y >= 800) {
+        if (this.position.y >= HEIGHT) {
             this.position.y = 0;
         }
     }
@@ -215,7 +217,7 @@ class BallEnemy extends Model {
 }
 var canvas = document.getElementById("myCanvas");
 var ctx = canvas.getContext("2d");
-player = new Player("Textures/player_spryte.png", 270, 700)
+player = new Player("Textures/player_spryte.png", WIDTH/2, HEIGHT-100)
 
 let rightPressed = false;
 let leftPressed = false;
@@ -236,7 +238,9 @@ function copyTouch({ identifier, pageX, pageY }) {
 }
 lastx = 0;
 lasty = 0;
+startTap = false;
 function handleStart(evt) {
+    startTap = true;
     evt.preventDefault();
     console.log("touchstart.");
     var el = document.getElementById("myCanvas");
@@ -247,6 +251,7 @@ function handleStart(evt) {
     lasty = ongoingTouches[0].pageY;
 }
 function handleMove(evt) {
+    startTap = false;
     evt.preventDefault();
     var el = document.getElementById("myCanvas");
     var ctx = el.getContext("2d");
@@ -318,7 +323,7 @@ function keyUpHandler(e) {
     }
 }
 for (let i = 0; i < 50; i++) {
-    let star = new Star('Textures/star.png', getRandomInt(600), getRandomInt(800));
+    let star = new Star('Textures/star.png', getRandomInt(WIDTH), getRandomInt(HEIGHT));
     arrayStars.push(star);
 }
 function draw() {
@@ -329,7 +334,7 @@ function draw() {
         arrayStars[i].draw(ctx);
     }
     if (isGameStart && !isGameEnd) {
-        if (score % 6 == 5) {
+        if (score % 6 == 10) {
             bossFight = true;
         }
         if (!bossIsCreated && bossFight && enemyes.length == 0) {
@@ -426,12 +431,12 @@ function draw() {
     }
     if (!isGameStart && !isGameEnd) {
         drawStartMenu();
-        if (spacePressed) {
+        if (spacePressed || startTap) {
             isGameStart = true;
         }
     } else if (isGameStart && isGameEnd) {
         drawLoseMenu();
-        if (spacePressed) {
+        if (spacePressed || startTap) {
             isGameEnd = false;
             isGameStart = true;
             score = 0;
