@@ -56,6 +56,7 @@ function gameEnding() {
     playerShoots = [];
     enemyesShoots = [];
     enemyes = [];
+    enemyesT2 = [];
     isGameStart = true;
     isGameEnd = true;
     shootTimer = 0;
@@ -96,8 +97,38 @@ class Player extends Model {
     }
 }
 class Enemy extends Model {
-    constructor(spriteWay, xPosition = (getRandomInt(WIDTH - 65)), yPosition = -20) {
-        super(spriteWay, xPosition, yPosition, 64, 64, 1);
+    constructor(tier = 1) {
+
+        if (tier == 1) {
+            super("Textures/enemy_t1.png", (getRandomInt(WIDTH - 65)), -20, 64, 64, 1);
+            this.rapidTime = 1;
+            this.periodOfShooting = 100;
+            this.ballRadius = 8;
+            this.tier = 1;
+
+        }
+        if (tier == 2) {
+            super("Textures/enemy_t2.png", (getRandomInt(WIDTH - 65)), -20, 64, 64, 3);
+            this.rapidTime = 1;
+            this.periodOfShooting = 100;
+            this.ballRadius = 16;
+            this.tier = 2;
+        }
+        if (tier == 3) {
+            super("Textures/enemy_t3.png", (getRandomInt(WIDTH - 65)), -20, 128, 128, 30); //boss 1
+            this.rapidTime = 200;
+            this.periodOfShooting = 400;
+            this.ballRadius = 8;
+            this.tier = 3;
+        }
+        if (tier == 4) {
+            super("Textures/enemy_t4.png", (getRandomInt(WIDTH - 65)), -20, 128, 128, 60); //boss 2
+            this.rapidTime = 150;
+            this.periodOfShooting = 200;
+            this.ballRadius = 16;
+            this.tier = 4;
+        }
+        this.spriteBallWay = "Textures/green_ball.png";
         this.shootingTimer = 0;
         this.vector = {
             xVector: 1,
@@ -109,77 +140,53 @@ class Enemy extends Model {
         }
     }
     move() {
-        if (this.position.y < 0) {
-            this.vector.yVector = 1;
-        }
-        if (this.position.y > 0 && this.position.y < HEIGHT / 3) {
-            this.vector.yVector = 1;
-        } else if (getRandomInt(60) == 1) {
-            this.vector.yVector = -1;
-        }
-        this.position.y += this.vector.yVector;
-
-        this.position.x += this.vector.xVector;
-        if (this.position.x >= WIDTH - this.width || this.position.x <= 0) {
-            this.vector.xVector *= -1;
-        }
-        if (getRandomInt(120) == 1) {
-            this.vector.xVector *= -1;
-        }
-    }
-    canShoot() {
-        this.shootingTimer++;
-        if (this.shootingTimer > 100) {
-            this.shootingTimer = 0;
-        }
-        return (this.shootingTimer < 1);
-    }
-    shoot(i) {
-        return new BallEnemy("Textures/green_ball.png", (enemyes[i].shootingPosition.x + enemyes[i].position.x), enemyes[i].shootingPosition.y + enemyes[i].position.y);
-    }
-
-}
-class Boss extends Model {
-    constructor(spriteWay, xPosition = (WIDTH / 2), yPosition = -128) {
-        super(spriteWay, xPosition, yPosition, 128, 128, 40);
-        this.shootingTimer = 0;
-        this.vector = {
-            xVector: 1,
-            yVector: 1,
-        }
-        this.shootingPosition = {
-            x: this.width / 2,
-            y: this.height,
-        }
-    }
-    move() {
-        if (this.position.y < 25) {
-            this.vector.yVector = 1;
-        }
-        if (this.position.y < HEIGHT / 6) {
-            this.position.y += 1 * this.vector.yVector;
-        } else {
-            if (getRandomInt(120) == 1) {
+        if (this.tier <= 2) {
+            if (this.position.y < 0) {
+                this.vector.yVector = 1;
+            }
+            if (this.position.y > 0 && this.position.y < HEIGHT / 3) {
+                this.vector.yVector = 1;
+            } else if (getRandomInt(60) == 1) {
                 this.vector.yVector = -1;
             }
-        }
-        this.position.x += this.vector.xVector;
-        if (this.position.x >= WIDTH - this.width || this.position.x <= 0) {
-            this.vector.xVector *= -1;
-        }
-        if (getRandomInt(120) == 1) {
-            this.vector.xVector *= -1;
+            this.position.y += this.vector.yVector;
+
+            this.position.x += this.vector.xVector;
+            if (this.position.x >= WIDTH - this.width || this.position.x <= 0) {
+                this.vector.xVector *= -1;
+            }
+            if (getRandomInt(120) == 1) {
+                this.vector.xVector *= -1;
+            }
+        } else {
+            if (this.position.y < 25) {
+                this.vector.yVector = 1;
+            }
+            if (this.position.y < HEIGHT / 6) {
+                this.position.y += 1 * this.vector.yVector;
+            } else {
+                if (getRandomInt(120) == 1) {
+                    this.vector.yVector = -1;
+                }
+            }
+            this.position.x += this.vector.xVector;
+            if (this.position.x >= WIDTH - this.width || this.position.x <= 0) {
+                this.vector.xVector *= -1;
+            }
+            if (getRandomInt(120) == 1) {
+                this.vector.xVector *= -1;
+            }
         }
     }
-    canShoot() {
+
+    shoot() {
         this.shootingTimer++;
-        if (this.shootingTimer > 400) {
+        if (this.shootingTimer > this.periodOfShooting) {
             this.shootingTimer = 0;
         }
-        return (this.shootingTimer < 180);
-    }
-    shoot(i) {
-        return new BallEnemy("Textures/green_ball.png", (enemyes[i].shootingPosition.x + enemyes[i].position.x), enemyes[i].shootingPosition.y + enemyes[i].position.y);
+        if (this.shootingTimer < this.rapidTime) {
+            return new BallEnemy((this.shootingPosition.x + this.position.x), this.shootingPosition.y + this.position.y, this.ballRadius);
+        }
     }
 }
 class Star extends Model {
@@ -207,8 +214,8 @@ class BallPlayer extends Model {
     }
 }
 class BallEnemy extends Model {
-    constructor(spriteWay, xPosition, yPosition) {
-        super(spriteWay, xPosition, yPosition, 8, 8);
+    constructor(xPosition, yPosition, radius = 8) {
+        super("Textures/green_ball.png", xPosition, yPosition, radius, radius);
     }
     move(dy = 2) {
         this.position.y += dy;
@@ -248,9 +255,6 @@ startTap = false;
 function handleStart(evt) {
     startTap = true;
     evt.preventDefault();
-    console.log("touchstart.");
-    var el = document.getElementById("myCanvas");
-    var ctx = el.getContext("2d");
     var touches = evt.changedTouches;
     ongoingTouches.push(copyTouch(touches[0]));
     lastx = ongoingTouches[0].pageX;
@@ -260,8 +264,6 @@ function handleStart(evt) {
 function handleMove(evt) {
     startTap = false;
     evt.preventDefault();
-    var el = document.getElementById("myCanvas");
-    var ctx = el.getContext("2d");
     var touches = evt.changedTouches;
     moveTouch = touches[0];
     if (moveTouch.pageX - dx > 20 || moveTouch.pageX - dx < -20) {
@@ -338,6 +340,7 @@ for (let i = 0; i < 50; i++) {
     let star = new Star('Textures/star.png', getRandomInt(WIDTH), getRandomInt(HEIGHT));
     arrayStars.push(star);
 }
+let GAMESTAGE = 1;
 
 function draw() {
     ctx.beginPath();
@@ -347,27 +350,39 @@ function draw() {
         arrayStars[i].draw(ctx);
     }
     if (isGameStart && !isGameEnd) {
-        if (score % 11 == 10) {
+        if (score % 15 == 14) {
             bossFight = true;
         }
         if (!bossIsCreated && bossFight && enemyes.length == 0) {
             bossIsCreated = true;
-            enemyes.push(new Boss("Textures/boss_sprite.png"));
+            if (GAMESTAGE == 1) {
+                enemyes.push(new Enemy(3));
+                GAMESTAGE++;
+            } else {
+                enemyes.push(new Enemy(4))
+            }
         }
         if (bossIsCreated && enemyes.length == 0) {
             bossIsCreated = false;
             bossFight = false
+            score += 100;
         }
+
         if (getRandomInt(100) == 1 && enemyes.length < 5 && !bossFight) {
-            enemyes.push(new Enemy('Textures/en1.png'));
-        }
-        shootTimer += 1;
-        for (let i = 0; i < enemyes.length; i++) {
-            if (enemyes[i].canShoot()) {
-                enemyesShoots.push(enemyes[i].shoot(i));
+            if (score < 15) {
+                enemyes.push(new Enemy(1));
+            } else {
+                enemyes.push(new Enemy(2));
             }
         }
-        if (shootTimer == 35) {
+        for (let i = 0; i < enemyes.length; i++) {
+            let newShotBall = enemyes[i].shoot();
+            if (newShotBall != undefined) {
+                enemyesShoots.push(newShotBall);
+            }
+        }
+        shootTimer += 1; // FIX!
+        if (shootTimer == 35) { //FIX!
             shootTimer = 0;
             playerShoots.push(new BallPlayer("Textures/blue_ball.png", (player.shootingPosition.x + player.position.x), (player.shootingPosition.y + player.position.y)))
         }
@@ -436,9 +451,9 @@ function draw() {
         }
         ctx.fillText(healthBar, 150, 30);
         drawScore()
-        drawD();
-        //отладка
+            //drawD();
     }
+
     if (!isGameStart && !isGameEnd) {
         drawStartMenu();
         if (spacePressed || startTap) {
@@ -451,8 +466,7 @@ function draw() {
             isGameStart = true;
             score = 0;
         }
+        ctx.closePath();
     }
-
-    ctx.closePath();
 }
 setInterval(draw, 10);
