@@ -18,9 +18,11 @@ isGameEnd = false;
 shootTimer = 0;
 bossFight = false;
 bossIsCreated = false;
+
 function getRandomInt(max) {
     return Math.floor(Math.random() * max);
 }
+
 function drawScore() {
     ctx.font = "24px Arial";
     ctx.fillStyle = "#0095DD";
@@ -39,6 +41,7 @@ function drawStartMenu() {
     ctx.fillText("SCORE RECORD: " + scoreRecord, 80, 130);
     ctx.fillText("Tap *space* to START!", 60, 400);
 }
+
 function drawLoseMenu() {
     ctx.font = "50px Arial";
     ctx.fillStyle = "#0095DD";
@@ -47,6 +50,7 @@ function drawLoseMenu() {
     ctx.fillText("SCORE RECORD: " + scoreRecord, 80, 260);
     ctx.fillText("Tap *space* to START!", 60, 410);
 }
+
 function gameEnding() {
     healthBar = "❤️❤️❤️"
     playerShoots = [];
@@ -92,7 +96,7 @@ class Player extends Model {
     }
 }
 class Enemy extends Model {
-    constructor(spriteWay, xPosition = (getRandomInt(WIDTH-65)), yPosition = -20) {
+    constructor(spriteWay, xPosition = (getRandomInt(WIDTH - 65)), yPosition = -20) {
         super(spriteWay, xPosition, yPosition, 64, 64, 1);
         this.shootingTimer = 0;
         this.vector = {
@@ -217,7 +221,7 @@ class BallEnemy extends Model {
 }
 var canvas = document.getElementById("myCanvas");
 var ctx = canvas.getContext("2d");
-player = new Player("Textures/player_spryte.png", WIDTH/2, HEIGHT-100)
+player = new Player("Textures/player_spryte.png", WIDTH / 2, HEIGHT - 100)
 
 let rightPressed = false;
 let leftPressed = false;
@@ -233,12 +237,14 @@ canvas.addEventListener("touchstart", handleStart, false);
 canvas.addEventListener("touchend", handleEnd, false);
 canvas.addEventListener("touchcancel", handleCancel, false);
 canvas.addEventListener("touchmove", handleMove, false);
+
 function copyTouch({ identifier, pageX, pageY }) {
     return { identifier, pageX, pageY };
 }
 lastx = 0;
 lasty = 0;
 startTap = false;
+
 function handleStart(evt) {
     startTap = true;
     evt.preventDefault();
@@ -250,6 +256,7 @@ function handleStart(evt) {
     lastx = ongoingTouches[0].pageX;
     lasty = ongoingTouches[0].pageY;
 }
+
 function handleMove(evt) {
     startTap = false;
     evt.preventDefault();
@@ -266,16 +273,18 @@ function handleMove(evt) {
     lastx = moveTouch.pageX;
     lasty = moveTouch.pageY;
 }
+
 function handleEnd(evt) {
     evt.preventDefault();
     var touches = evt.changedTouches;
     for (var i = 0; i < touches.length; i++) {
         var idx = ongoingTouchIndexById(touches[i].identifier);
         if (idx >= 0) {
-            ongoingTouches.splice(idx, 1);  // remove it; we're done
+            ongoingTouches.splice(idx, 1); // remove it; we're done
         }
     }
 }
+
 function handleCancel(evt) {
     evt.preventDefault();
     console.log("touchcancel.");
@@ -283,9 +292,10 @@ function handleCancel(evt) {
 
     for (var i = 0; i < touches.length; i++) {
         var idx = ongoingTouchIndexById(touches[i].identifier);
-        ongoingTouches.splice(idx, 1);  // remove it; we're done
+        ongoingTouches.splice(idx, 1); // remove it; we're done
     }
 }
+
 function ongoingTouchIndexById(idToFind) {
     for (var i = 0; i < ongoingTouches.length; i++) {
         var id = ongoingTouches[i].identifier;
@@ -294,8 +304,9 @@ function ongoingTouchIndexById(idToFind) {
             return i;
         }
     }
-    return -1;    // not found
+    return -1; // not found
 }
+
 function keyDownHandler(e) {
     if (e.key == "ArrowRight") {
         rightPressed = true;
@@ -309,6 +320,7 @@ function keyDownHandler(e) {
         spacePressed = true;
     }
 }
+
 function keyUpHandler(e) {
     if (e.key == "ArrowRight") {
         rightPressed = false;
@@ -326,6 +338,7 @@ for (let i = 0; i < 50; i++) {
     let star = new Star('Textures/star.png', getRandomInt(WIDTH), getRandomInt(HEIGHT));
     arrayStars.push(star);
 }
+
 function draw() {
     ctx.beginPath();
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -334,7 +347,7 @@ function draw() {
         arrayStars[i].draw(ctx);
     }
     if (isGameStart && !isGameEnd) {
-        if (score % 6 == 10) {
+        if (score % 11 == 10) {
             bossFight = true;
         }
         if (!bossIsCreated && bossFight && enemyes.length == 0) {
@@ -396,8 +409,7 @@ function draw() {
             if (playerShoots[i].move(-7)) {
                 playerShoots.splice(i, 1);
                 i--;
-            }
-            else {
+            } else {
                 playerShoots[i].draw(ctx);
             }
         }
@@ -405,8 +417,7 @@ function draw() {
             if (enemyesShoots[i].move(2)) {
                 enemyesShoots.splice(i, 1);
                 i--;
-            }
-            else if (enemyesShoots[i].position.x > player.position.x && enemyesShoots[i].position.x < player.position.x + 64 &&
+            } else if (enemyesShoots[i].position.x > player.position.x && enemyesShoots[i].position.x < player.position.x + 64 &&
                 enemyesShoots[i].position.y > player.position.y + 20 && enemyesShoots[i].position.y < player.position.y + 64) {
                 healthBar = healthBar.substring(0, healthBar.length - 2);
                 enemyesShoots.splice(i, 1);
@@ -419,11 +430,10 @@ function draw() {
                     player.health = 3;
                     break;
                 }
-            }
-            else {
+            } else {
                 enemyesShoots[i].draw(ctx);
-            }      
-        }                                         
+            }
+        }
         ctx.fillText(healthBar, 150, 30);
         drawScore()
         drawD();
