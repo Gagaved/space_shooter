@@ -115,14 +115,14 @@ class Enemy extends Model {
             this.tier = 2;
         }
         if (tier == 3) {
-            super("Textures/enemy_t3.png", (getRandomInt(WIDTH - 65)), -20, 128, 128, 30); //boss 1
+            super("Textures/enemy_t3.png", (getRandomInt(WIDTH - 129)), -129, 128, 128, 30); //boss 1
             this.rapidTime = 200;
             this.periodOfShooting = 400;
             this.ballRadius = 8;
             this.tier = 3;
         }
         if (tier == 4) {
-            super("Textures/enemy_t4.png", (getRandomInt(WIDTH - 65)), -20, 128, 128, 60); //boss 2
+            super("Textures/enemy_t4.png", (getRandomInt(WIDTH - 129)), -129, 128, 128, 60); //boss 2
             this.rapidTime = 150;
             this.periodOfShooting = 200;
             this.ballRadius = 16;
@@ -350,7 +350,10 @@ function draw() {
         arrayStars[i].draw(ctx);
     }
     if (isGameStart && !isGameEnd) {
-        if (score % 15 == 14) {
+        if (score >= 15 && GAMESTAGE == 1) {
+            bossFight = true;
+        }
+        if (score >= 125 && GAMESTAGE >= 2) {
             bossFight = true;
         }
         if (!bossIsCreated && bossFight && enemyes.length == 0) {
