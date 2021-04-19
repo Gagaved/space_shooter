@@ -6,6 +6,7 @@ let WIDTH = canvas.width;
 let HEIGHT = canvas.height;
 let dx;
 let dy;
+let controlType = 0;
 let scoreRecord = 0;
 let score = 0;
 let totalCountEnemyCreated = 0;
@@ -24,9 +25,9 @@ let bossLeft = 0;
 function getRandomInt(max) {
     return Math.floor(Math.random() * max);
 }
-function abs(ex){
-    if (ex<0){
-        ex *=-1;
+function abs(ex) {
+    if (ex < 0) {
+        ex *= -1;
     }
     return ex;
 }
@@ -46,7 +47,12 @@ function drawStartMenu() {
     ctx.font = "50px Arial";
     ctx.fillStyle = "#0095DD";
     ctx.fillText("SCORE RECORD: " + scoreRecord, 80, 130);
-    ctx.fillText("Tap *space* to START!", 60, 400);
+    ctx.font = "40px Arial";
+    ctx.fillText("Press *S* to play with keyboard!(*space* for shooting)", 30, 410);
+    ctx.fillText("OR", 120, 475);
+    ctx.fillText("TOUCH to screen to play with sensory!", 60, 540);
+    ctx.fillText("OR", 120, 600);
+    ctx.fillText("CLICK to play with mouse!", 60, 660);
 }
 
 function drawLoseMenu() {
@@ -55,7 +61,12 @@ function drawLoseMenu() {
     ctx.fillText("YOU LOSE!", 80, 60);
     ctx.fillText("YOUR SCORE: " + score, 80, 160);
     ctx.fillText("SCORE RECORD: " + scoreRecord, 80, 260);
-    ctx.fillText("Tap *space* to START!", 60, 410);
+    ctx.font = "40px Arial";
+    ctx.fillText("Press *S* to play with keyboard!(*space* for shooting)", 30, 410);
+    ctx.fillText("OR", 120, 475);
+    ctx.fillText("TOUCH to screen to play with sensory!", 60, 540);
+    ctx.fillText("OR", 120, 600);
+    ctx.fillText("CLICK to play with mouse!", 60, 660);
 }
 
 function gameEnding() {
@@ -195,15 +206,15 @@ class Enemy extends Model {
                 for (let i = 0; i < enemyes.length; i++) {
                     if (this.unicalIdent != enemyes[i].unicalIdent) {
                         let ex = abs(this.position.y - enemyes[i].position.y)
-                        
+
                         if (ex < this.height) {
-                            if (this.position.x > enemyes[i].position.x){
-                                if(enemyes[i].position.x+this.width> this.position.x){
+                            if (this.position.x > enemyes[i].position.x) {
+                                if (enemyes[i].position.x + this.width > this.position.x) {
                                     this.vector.xVector = 1;
                                     enemyes[i].vector.xVector = -1;
                                 }
-                            }else{
-                                if(this.position.x+this.width > enemyes[i].position.x){
+                            } else {
+                                if (this.position.x + this.width > enemyes[i].position.x) {
                                     this.vector.xVector = -1;
                                     enemyes[i].vector.xVector = 1;
                                 }
@@ -274,10 +285,13 @@ let leftPressed = false;
 let topPressed = false;
 let botPressed = false;
 let spacePressed = false;
+let sPressed = false;
 
+document.addEventListener("mousemove", mouseMoveHandler, false);
+document.addEventListener("mousedown", mouseDownHandler, false);
+document.addEventListener("mouseup", mouseUpHandler, false);
 document.addEventListener("keydown", keyDownHandler, false);
 document.addEventListener("keyup", keyUpHandler, false);
-
 var ongoingTouches = [];
 canvas.addEventListener("touchstart", handleStart, false);
 canvas.addEventListener("touchend", handleEnd, false);
@@ -290,7 +304,6 @@ function copyTouch({ identifier, pageX, pageY }) {
 lastx = 0;
 lasty = 0;
 startTap = false;
-
 function handleStart(evt) {
     startTap = true;
     evt.preventDefault();
@@ -303,18 +316,19 @@ function handleStart(evt) {
 function handleMove(evt) {
     startTap = false;
     evt.preventDefault();
-    var touches = evt.changedTouches;
-    moveTouch = touches[0];
-    if (moveTouch.pageX - dx > 20 || moveTouch.pageX - dx < -20) {
-        console.log('danger');
+    if (controlType == 3) {
+        let touches = evt.changedTouches;
+        moveTouch = touches[0];
+        if (moveTouch.pageX - dx > 20 || moveTouch.pageX - dx < -20) {
+            console.log('danger');
+        }
+        dx = -lastx + moveTouch.pageX;
+        dy = -lasty + moveTouch.pageY;
+        player.move(dx, dy);
+        lastx = moveTouch.pageX;
+        lasty = moveTouch.pageY;
     }
-    dx = -lastx + moveTouch.pageX;
-    dy = -lasty + moveTouch.pageY;
-    player.move(dx, dy);
-    lastx = moveTouch.pageX;
-    lasty = moveTouch.pageY;
 }
-
 function handleEnd(evt) {
     evt.preventDefault();
     var touches = evt.changedTouches;
@@ -347,7 +361,34 @@ function ongoingTouchIndexById(idToFind) {
     }
     return -1; // not found
 }
-
+function mouseMoveHandler(e) {
+    if (controlType == 2 && e.target.id == 'myCanvas') {
+        document.body.style.cursor = "none";
+        if (e.offsetX >= WIDTH - 64) {
+            player.position.x = WIDTH - 64;
+        } else {
+            player.position.x = e.offsetX;
+        }
+        if (e.offsetY > HEIGHT - 64) {
+            player.position.y = HEIGHT - 64;
+        } else {
+            player.position.y = e.offsetY;
+        }
+    } else {
+        document.body.style.cursor = "default";
+    }
+}
+let mouseLeftPressed = false;
+function mouseDownHandler(e) {
+    if (e.button == 0 && e.target.id == 'myCanvas') {
+        mouseLeftPressed = true;
+    }
+}
+function mouseUpHandler(e) {
+    if (e.button == 0) {
+        mouseLeftPressed = false;
+    }
+}
 function keyDownHandler(e) {
     if (e.key == "ArrowRight") {
         rightPressed = true;
@@ -359,6 +400,8 @@ function keyDownHandler(e) {
         botPressed = true;
     } else if (e.key == ' ') {
         spacePressed = true;
+    } else if (e.key == 's') {
+        sPressed = true;
     }
 }
 
@@ -373,20 +416,26 @@ function keyUpHandler(e) {
         botPressed = false;
     } else if (e.key == ' ') {
         spacePressed = false;
+    } else if (e.key == 's') {
+        sPressed = false;
     }
 }
-function movePlayerByKeyboard(rightPressed, leftPressed, topPressed, botPressed) { //перемещие игрока используя стрелки на клавиатуре
-    if (rightPressed) {
-        player.move(5, 0);
-    }
-    if (leftPressed) {
-        player.move(-5, 0);
-    }
-    if (topPressed) {
-        player.move(0, -5);
-    }
-    if (botPressed) {
-        player.move(0, 5);
+function movePlayerByKeyboard(rightPressed, leftPressed, topPressed, botPressed) {
+    if (controlType == 1) { //перемещие игрока используя стрелки на клавиатуре
+        if (rightPressed) {
+            player.move(5, 0);
+        }
+        if (leftPressed) {
+            player.move(-5, 0);
+        }
+        if (topPressed) {
+            player.move(0, -5);
+        }
+        if (botPressed) {
+            player.move(0, 5);
+        }
+    } else {
+        return;
     }
 }
 for (let i = 0; i < 50; i++) { //создаем звезды на фон.
@@ -408,7 +457,7 @@ function draw() {
         if (totalCountEnemyCreated >= 25 && GAMESTAGE == 2) {
             bossFight = true;
         }
-        if(totalCountEnemyCreated>35 && GAMESTAGE == 3){
+        if (totalCountEnemyCreated > 35 && GAMESTAGE == 3) {
             bossFight = true;
         }
         if (!bossIsCreated && bossFight && enemyes.length == 0) {
@@ -419,7 +468,7 @@ function draw() {
             } else if (GAMESTAGE == 2) {
                 enemyes.push(new Enemy(4))
                 GAMESTAGE++;
-            }else if (GAMESTAGE == 3){
+            } else if (GAMESTAGE == 3) {
                 enemyes.push(new Enemy(4));
                 enemyes.push(new Enemy(4));
                 bossLeft = 2;
@@ -438,7 +487,7 @@ function draw() {
             }
 
         }
-        if (getRandomInt(300)==1 && GAMESTAGE == 4 && enemyes.length <5 && bossFight){
+        if (getRandomInt(300) == 1 && GAMESTAGE == 4 && enemyes.length < 5 && bossFight) {
             enemyes.push(new Enemy(1));
         }
         for (let i = 0; i < enemyes.length; i++) { // каждый противник стреляем
@@ -447,10 +496,12 @@ function draw() {
                 enemyesShoots.push(newShotBall);
             }
         }
-        shootTimer += 1; // FIX!
-        if (shootTimer == 35) { //FIX!
-            shootTimer = 0;
-            playerShoots.push(new BallPlayer("Textures/blue_ball.png", (player.shootingPosition.x + player.position.x), (player.shootingPosition.y + player.position.y)))
+        shootTimer--; // FIX!
+        if (shootTimer <= 0) { //FIX!
+            if (spacePressed || controlType == 2 ||controlType ==3 ) {
+                shootTimer = 35;
+                playerShoots.push(new BallPlayer("Textures/blue_ball.png", (player.shootingPosition.x + player.position.x), (player.shootingPosition.y + player.position.y)))
+            }
         }
         let flag;
         for (let i = 0; i < playerShoots.length; i++) { // регистрируем попадания игрока по врагам
@@ -459,13 +510,13 @@ function draw() {
                 if (playerShoots[i].position.x > enemyes[en].position.x && playerShoots[i].position.x < enemyes[en].position.x + enemyes[en].width && playerShoots[i].position.y > enemyes[en].position.y && playerShoots[i].position.y < enemyes[en].position.y + enemyes[en].height) {
                     enemyes[en].health--;
                     if (enemyes[en].health <= 0) {
-                        if (enemyes[en].tier == 4 && --bossLeft){
+                        if (enemyes[en].tier == 4 && --bossLeft) {
                             bossFight = false;
                         }
-                        if (enemyes[en].tier == 3){
+                        if (enemyes[en].tier == 3) {
                             bossFight = false;
                         }
-                        score+=enemyes[en].revard;
+                        score += enemyes[en].revard;
                         enemyes.splice(en, 1);
                         en--
                     }
@@ -528,12 +579,37 @@ function draw() {
 
     if (!isGameStart && !isGameEnd) {// если игра еще не началась. Меню.
         drawStartMenu();
-        if (spacePressed || startTap) {
+        document.body.style.cursor = "default";
+        if (sPressed || mouseLeftPressed || startTap) {
+            if (sPressed) {
+                controlType = 1;
+                document.body.style.cursor = "default";
+            }
+            if (mouseLeftPressed) {
+                controlType = 2;
+                document.body.style.cursor = "none";
+            }
+            if (startTap) {
+                controlType = 3;
+                document.body.style.cursor = "default";
+            }
             isGameStart = true;
         }
     } else if (isGameStart && isGameEnd) {//если игра закончилась. Меню.
         drawLoseMenu();
-        if (spacePressed || startTap) {
+        document.body.style.cursor = "default";
+        if (sPressed || mouseLeftPressed || startTap) {
+            if (sPressed) {
+                controlType = 1;
+                document.body.style.cursor = "default";
+            } if (mouseLeftPressed) {
+                document.body.style.cursor = "none";
+                controlType = 2;
+            }
+            if (startTap) {
+                controlType = 3;
+                document.body.style.cursor = "default";
+            }
             isGameEnd = false;
             isGameStart = true;
             score = 0;
