@@ -8,21 +8,28 @@ let dx;
 let dy;
 let scoreRecord = 0;
 let score = 0;
+let totalCountEnemyCreated = 0;
+let GAMESTAGE = 1;
 let healthBar = "❤️❤️❤️"
 let arrayStars = [];
 let playerShoots = [];
 let enemyesShoots = [];
 let enemyes = [];
-isGameStart = false;
-isGameEnd = false;
-shootTimer = 0;
-bossFight = false;
-bossIsCreated = false;
-
+let isGameStart = false;
+let isGameEnd = false;
+let shootTimer = 0;
+let bossFight = false;
+let bossIsCreated = false;
+let bossLeft = 0;
 function getRandomInt(max) {
     return Math.floor(Math.random() * max);
 }
-
+function abs(ex){
+    if (ex<0){
+        ex *=-1;
+    }
+    return ex;
+}
 function drawScore() {
     ctx.font = "24px Arial";
     ctx.fillStyle = "#0095DD";
@@ -52,7 +59,9 @@ function drawLoseMenu() {
 }
 
 function gameEnding() {
-    healthBar = "❤️❤️❤️"
+    totalCountEnemyCreated = 0;
+    GAMESTAGE = 1;
+    healthBar = "❤️❤️❤️";
     playerShoots = [];
     enemyesShoots = [];
     enemyes = [];
@@ -64,28 +73,35 @@ function gameEnding() {
     bossIsCreated = false;
 }
 class Model {
-    constructor(spriteWay, xPosition, yPosition, width, height, health) {
+    constructor(spriteWay, xPosition, yPosition, width, height, health, secondSpriteWay = spriteWay) {
         this.health = health;
         this.width = width;
         this.height = height;
         this.spriteImg = new Image();
+        this.secondSpriteImg = new Image();
         this.spriteImg.src = spriteWay;
+        this.secondSpriteImg.src = secondSpriteWay;
         this.position = {
             x: xPosition,
             y: yPosition,
         };
     }
-    draw(ctx) {
-        ctx.drawImage(this.spriteImg, this.position.x, this.position.y, this.width, this.height)
+    draw(ctx, mode = false) {
+        if (!mode) {
+            ctx.drawImage(this.spriteImg, this.position.x, this.position.y, this.width, this.height)
+        } else {
+            ctx.drawImage(this.secondSpriteImg, this.position.x, this.position.y, this.width, this.height)
+        }
     }
 }
 class Player extends Model {
     constructor(spriteWay, xPosition, yPosition) {
-        super(spriteWay, xPosition, yPosition, 64, 64, 3);
+        super(spriteWay, xPosition, yPosition, 64, 64, 3, "Textures/player_spryte2.png");
         this.shootingPosition = {
             x: this.width / 2 - 4,
             y: 0,
         }
+        this.infinityTimer = 0;
     }
     move(dx, dy) {
         if ((this.position.x + dx) < WIDTH - 64 && (this.position.x + dx) > 0) {
@@ -98,13 +114,14 @@ class Player extends Model {
 }
 class Enemy extends Model {
     constructor(tier = 1) {
-
+        totalCountEnemyCreated++;
         if (tier == 1) {
             super("Textures/enemy_t1.png", (getRandomInt(WIDTH - 65)), -20, 64, 64, 1);
             this.rapidTime = 1;
             this.periodOfShooting = 100;
             this.ballRadius = 8;
             this.tier = 1;
+            this.revard = 1;
 
         }
         if (tier == 2) {
@@ -113,21 +130,25 @@ class Enemy extends Model {
             this.periodOfShooting = 100;
             this.ballRadius = 16;
             this.tier = 2;
+            this.revard = 5;
         }
         if (tier == 3) {
-            super("Textures/enemy_t3.png", (getRandomInt(WIDTH - 129)), -129, 128, 128, 30); //boss 1
+            super("Textures/enemy_t3.png", (getRandomInt(WIDTH - 129)), -129, 128, 128, 20); //boss 1
             this.rapidTime = 200;
             this.periodOfShooting = 400;
             this.ballRadius = 8;
             this.tier = 3;
+            this.revard = 100;
         }
         if (tier == 4) {
-            super("Textures/enemy_t4.png", (getRandomInt(WIDTH - 129)), -129, 128, 128, 60); //boss 2
+            super("Textures/enemy_t4.png", (getRandomInt(WIDTH - 129)), -129, 128, 128, 45); //boss 2
             this.rapidTime = 150;
             this.periodOfShooting = 200;
             this.ballRadius = 16;
             this.tier = 4;
+            this.revard = 500;
         }
+        this.unicalIdent = totalCountEnemyCreated;
         this.spriteBallWay = "Textures/green_ball.png";
         this.shootingTimer = 0;
         this.vector = {
@@ -170,10 +191,28 @@ class Enemy extends Model {
                 }
             }
             this.position.x += this.vector.xVector;
-            if (this.position.x >= WIDTH - this.width || this.position.x <= 0) {
-                this.vector.xVector *= -1;
+            if (enemyes.length >= 2) {
+                for (let i = 0; i < enemyes.length; i++) {
+                    if (this.unicalIdent != enemyes[i].unicalIdent) {
+                        let ex = abs(this.position.y - enemyes[i].position.y)
+                        
+                        if (ex < this.height) {
+                            if (this.position.x > enemyes[i].position.x){
+                                if(enemyes[i].position.x+this.width> this.position.x){
+                                    this.vector.xVector = 1;
+                                    enemyes[i].vector.xVector = -1;
+                                }
+                            }else{
+                                if(this.position.x+this.width > enemyes[i].position.x){
+                                    this.vector.xVector = -1;
+                                    enemyes[i].vector.xVector = 1;
+                                }
+                            }
+                        }
+                    }
+                }
             }
-            if (getRandomInt(120) == 1) {
+            if (this.position.x >= WIDTH - this.width || this.position.x <= 0) {
                 this.vector.xVector *= -1;
             }
         }
@@ -336,24 +375,40 @@ function keyUpHandler(e) {
         spacePressed = false;
     }
 }
-for (let i = 0; i < 50; i++) {
+function movePlayerByKeyboard(rightPressed, leftPressed, topPressed, botPressed) { //перемещие игрока используя стрелки на клавиатуре
+    if (rightPressed) {
+        player.move(5, 0);
+    }
+    if (leftPressed) {
+        player.move(-5, 0);
+    }
+    if (topPressed) {
+        player.move(0, -5);
+    }
+    if (botPressed) {
+        player.move(0, 5);
+    }
+}
+for (let i = 0; i < 50; i++) { //создаем звезды на фон.
     let star = new Star('Textures/star.png', getRandomInt(WIDTH), getRandomInt(HEIGHT));
     arrayStars.push(star);
 }
-let GAMESTAGE = 1;
 
 function draw() {
     ctx.beginPath();
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    for (let i = 0; i < 50; i++) {
+    ctx.clearRect(0, 0, canvas.width, canvas.height); // очищаем поверхность
+    for (let i = 0; i < 50; i++) { //рисуем и перемещаем звезды
         arrayStars[i].move(1);
         arrayStars[i].draw(ctx);
     }
-    if (isGameStart && !isGameEnd) {
-        if (score >= 15 && GAMESTAGE == 1) {
+    if (isGameStart && !isGameEnd) { // если игра началась
+        if (totalCountEnemyCreated >= 15 && GAMESTAGE == 1) {
             bossFight = true;
         }
-        if (score >= 125 && GAMESTAGE >= 2) {
+        if (totalCountEnemyCreated >= 25 && GAMESTAGE == 2) {
+            bossFight = true;
+        }
+        if(totalCountEnemyCreated>35 && GAMESTAGE == 3){
             bossFight = true;
         }
         if (!bossIsCreated && bossFight && enemyes.length == 0) {
@@ -361,24 +416,32 @@ function draw() {
             if (GAMESTAGE == 1) {
                 enemyes.push(new Enemy(3));
                 GAMESTAGE++;
-            } else {
+            } else if (GAMESTAGE == 2) {
                 enemyes.push(new Enemy(4))
+                GAMESTAGE++;
+            }else if (GAMESTAGE == 3){
+                enemyes.push(new Enemy(4));
+                enemyes.push(new Enemy(4));
+                bossLeft = 2;
+                GAMESTAGE++;
             }
         }
         if (bossIsCreated && enemyes.length == 0) {
             bossIsCreated = false;
             bossFight = false
-            score += 100;
         }
-
-        if (getRandomInt(100) == 1 && enemyes.length < 5 && !bossFight) {
-            if (score < 15) {
+        if (getRandomInt(100) == 1 && enemyes.length < 5 && !bossFight) { // если не боссфайт то спавним обычных противников
+            if (GAMESTAGE == 1) {
                 enemyes.push(new Enemy(1));
-            } else {
+            } else if (GAMESTAGE >= 2) {
                 enemyes.push(new Enemy(2));
             }
+
         }
-        for (let i = 0; i < enemyes.length; i++) {
+        if (getRandomInt(300)==1 && GAMESTAGE == 4 && enemyes.length <5 && bossFight){
+            enemyes.push(new Enemy(1));
+        }
+        for (let i = 0; i < enemyes.length; i++) { // каждый противник стреляем
             let newShotBall = enemyes[i].shoot();
             if (newShotBall != undefined) {
                 enemyesShoots.push(newShotBall);
@@ -390,15 +453,21 @@ function draw() {
             playerShoots.push(new BallPlayer("Textures/blue_ball.png", (player.shootingPosition.x + player.position.x), (player.shootingPosition.y + player.position.y)))
         }
         let flag;
-        for (let i = 0; i < playerShoots.length; i++) {
+        for (let i = 0; i < playerShoots.length; i++) { // регистрируем попадания игрока по врагам
             flag = false;
             for (let en = 0; en < enemyes.length && !flag; en++) {
                 if (playerShoots[i].position.x > enemyes[en].position.x && playerShoots[i].position.x < enemyes[en].position.x + enemyes[en].width && playerShoots[i].position.y > enemyes[en].position.y && playerShoots[i].position.y < enemyes[en].position.y + enemyes[en].height) {
                     enemyes[en].health--;
                     if (enemyes[en].health <= 0) {
+                        if (enemyes[en].tier == 4 && --bossLeft){
+                            bossFight = false;
+                        }
+                        if (enemyes[en].tier == 3){
+                            bossFight = false;
+                        }
+                        score+=enemyes[en].revard;
                         enemyes.splice(en, 1);
                         en--
-                        score++;
                     }
                     playerShoots.splice(i, 1);
                     i--
@@ -406,24 +475,18 @@ function draw() {
                 }
             }
         }
-        if (rightPressed) {
-            player.move(5, 0);
+        movePlayerByKeyboard(rightPressed, leftPressed, topPressed, botPressed);// перемещаем игрока с клавиатуры
+        if (player.infinityTimer > 0) {
+            player.draw(ctx, true);
+        }// отрисовываем игрока.
+        else {
+            player.draw(ctx, false)
         }
-        if (leftPressed) {
-            player.move(-5, 0);
-        }
-        if (topPressed) {
-            player.move(0, -5);
-        }
-        if (botPressed) {
-            player.move(0, 5);
-        }
-        player.draw(ctx);
-        for (let i = 0; i < enemyes.length; i++) {
+        for (let i = 0; i < enemyes.length; i++) {//отрисовываем и перемещаем врагов.
             enemyes[i].move();
             enemyes[i].draw(ctx);
         }
-        for (let i = 0; i < playerShoots.length; i++) {
+        for (let i = 0; i < playerShoots.length; i++) {//отрисовываем и перемещаем выстрелы игрока.
             if (playerShoots[i].move(-7)) {
                 playerShoots.splice(i, 1);
                 i--;
@@ -431,38 +494,44 @@ function draw() {
                 playerShoots[i].draw(ctx);
             }
         }
-        for (let i = 0; i < enemyesShoots.length; i++) {
+        player.infinityTimer--;
+        for (let i = 0; i < enemyesShoots.length; i++) {//отрисовываем и перемещаем выстрелы врагов. Регистрируем попадания по игроку.
             if (enemyesShoots[i].move(4)) {
                 enemyesShoots.splice(i, 1);
                 i--;
             } else if (enemyesShoots[i].position.x > player.position.x && enemyesShoots[i].position.x < player.position.x + 64 &&
                 enemyesShoots[i].position.y > player.position.y + 20 && enemyesShoots[i].position.y < player.position.y + 64) {
-                healthBar = healthBar.substring(0, healthBar.length - 2);
-                enemyesShoots.splice(i, 1);
-                i--;
-                if (--player.health <= 0) {
-                    if (score > scoreRecord) {
-                        scoreRecord = score;
+                if (player.infinityTimer <= 0) {
+                    healthBar = healthBar.substring(0, healthBar.length - 2);
+                    enemyesShoots.splice(i, 1);
+                    i--;
+                    player.health--;
+                    if (player.health <= 0) {
+                        if (score > scoreRecord) {
+                            scoreRecord = score;
+                        }
+                        gameEnding();//сбрасываем игровые переменные.
+                        player.health = 3;
+                        break;
+                    } else {
+                        player.infinityTimer = 100;
                     }
-                    gameEnding();
-                    player.health = 3;
-                    break;
                 }
             } else {
                 enemyesShoots[i].draw(ctx);
             }
         }
-        ctx.fillText(healthBar, 150, 30);
-        drawScore()
-            //drawD();
+        ctx.fillText(healthBar, 150, 30); //выводим состояние здоровья.
+        drawScore() //выводим состояние счета.
+        //drawD();
     }
 
-    if (!isGameStart && !isGameEnd) {
+    if (!isGameStart && !isGameEnd) {// если игра еще не началась. Меню.
         drawStartMenu();
         if (spacePressed || startTap) {
             isGameStart = true;
         }
-    } else if (isGameStart && isGameEnd) {
+    } else if (isGameStart && isGameEnd) {//если игра закончилась. Меню.
         drawLoseMenu();
         if (spacePressed || startTap) {
             isGameEnd = false;
@@ -472,4 +541,4 @@ function draw() {
         ctx.closePath();
     }
 }
-setInterval(draw, 10);
+setInterval(draw, 10); //задаем интервал главой функции.
