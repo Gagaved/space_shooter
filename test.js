@@ -400,7 +400,7 @@ function keyDownHandler(e) {
         botPressed = true;
     } else if (e.key == ' ') {
         spacePressed = true;
-    } else if (e.key == 's') {
+    } else if (e.key == 's' || e.key == 'ы') {
         sPressed = true;
     }
 }
@@ -416,7 +416,7 @@ function keyUpHandler(e) {
         botPressed = false;
     } else if (e.key == ' ') {
         spacePressed = false;
-    } else if (e.key == 's') {
+    } else if (e.key == 's' || e.key == 'ы') {
         sPressed = false;
     }
 }
