@@ -83,31 +83,79 @@ function gameEnding() {
     bossFight = false;
     bossIsCreated = false;
 }
+let Sprites = {
+    starImg: new Image(),
+    playerImg: new Image(),
+    playerShieldImg: new Image(),
+    enemyT1Img: new Image(),
+    enemyT2Img: new Image(),
+    enemyT3Img: new Image(),
+    enemyT4Img: new Image(),
+    ballEnemy: new Image(),
+    ballPlayer: new Image(),
+    initial() {
+        this.starImg.src = "Textures/star.png";
+        this.playerImg.src = "Textures/player_sprite.png";
+        this.playerShieldImg.src = "Textures/player_sprite2.png";
+        this.enemyT1Img.src = "Textures/enemy_t1.png";
+        this.enemyT2Img.src = "Textures/enemy_t2.png";
+        this.enemyT3Img.src = "Textures/enemy_t3.png";
+        this.enemyT4Img.src = "Textures/enemy_t4.png";
+        this.ballEnemy.src = "Textures/green_ball.png";
+        this.ballPlayer.src = "Textures/blue_ball.png";
+    },
+    draw(properties) {
+        switch (properties[0]) {
+            case 'ballEnemy':
+                ctx.drawImage(this.ballEnemy, properties[1], properties[2], properties[3], properties[4]);
+                break;
+            case 'ballPlayer':
+                ctx.drawImage(this.ballPlayer, properties[1], properties[2], properties[3], properties[4]);
+                break;
+            case 'star':
+                ctx.drawImage(this.starImg, properties[1], properties[2], properties[3], properties[4]);
+            case 'player':
+                ctx.drawImage(this.playerImg, properties[1], properties[2], properties[3], properties[4]);
+                break;
+            case 'playerShield':
+                ctx.drawImage(this.playerShieldImg, properties[1], properties[2], properties[3], properties[4]);
+                break;
+            case 'enemyT1':
+                ctx.drawImage(this.enemyT1Img, properties[1], properties[2], properties[3], properties[4]);
+                break;
+            case 'enemyT2':
+                ctx.drawImage(this.enemyT2Img, properties[1], properties[2], properties[3], properties[4]);
+                break;
+            case 'enemyT3':
+                ctx.drawImage(this.enemyT3Img, properties[1], properties[2], properties[3], properties[4]);
+                break;
+            case 'enemyT4':
+                ctx.drawImage(this.enemyT4Img, properties[1], properties[2], properties[3], properties[4]);
+                break;
+        }
+    }
+}
+Sprites.initial();
 class Model {
-    constructor(spriteWay, xPosition, yPosition, width, height, health, secondSpriteWay = spriteWay) {
+    constructor(name, xPosition, yPosition, width, height, health) {
+        this.name = name;
         this.health = health;
         this.width = width;
         this.height = height;
-        this.spriteImg = new Image();
-        this.secondSpriteImg = new Image();
-        this.spriteImg.src = spriteWay;
-        this.secondSpriteImg.src = secondSpriteWay;
         this.position = {
             x: xPosition,
             y: yPosition,
         };
     }
-    draw(ctx, mode = false) {
-        if (!mode) {
-            ctx.drawImage(this.spriteImg, this.position.x, this.position.y, this.width, this.height)
-        } else {
-            ctx.drawImage(this.secondSpriteImg, this.position.x, this.position.y, this.width, this.height)
-        }
+    getProperties() {
+        return [this.name, this.position.x, this.position.y, this.width, this.height];
     }
+    /* draw(ctx, mode = false) {
+    } */
 }
 class Player extends Model {
-    constructor(spriteWay, xPosition, yPosition) {
-        super(spriteWay, xPosition, yPosition, 64, 64, 3, "Textures/player_spryte2.png");
+    constructor(xPosition, yPosition) {
+        super('player', xPosition, yPosition, 64, 64, 3);
         this.shootingPosition = {
             x: this.width / 2 - 4,
             y: 0,
@@ -126,8 +174,10 @@ class Player extends Model {
 class Enemy extends Model {
     constructor(tier = 1) {
         totalCountEnemyCreated++;
+        // let s = JSON.stringify(obj);
+        // let obj = JSON.parse(s);
         if (tier == 1) {
-            super("Textures/enemy_t1.png", (getRandomInt(WIDTH - 65)), -20, 64, 64, 1);
+            super('enemyT1', getRandomInt(WIDTH - 65), -20, 64, 64, 1);
             this.rapidTime = 1;
             this.periodOfShooting = 100;
             this.ballRadius = 8;
@@ -136,7 +186,7 @@ class Enemy extends Model {
 
         }
         if (tier == 2) {
-            super("Textures/enemy_t2.png", (getRandomInt(WIDTH - 65)), -20, 64, 64, 3);
+            super('enemyT2', (getRandomInt(WIDTH - 65)), -20, 64, 64, 3);
             this.rapidTime = 1;
             this.periodOfShooting = 100;
             this.ballRadius = 16;
@@ -144,7 +194,7 @@ class Enemy extends Model {
             this.revard = 5;
         }
         if (tier == 3) {
-            super("Textures/enemy_t3.png", (getRandomInt(WIDTH - 129)), -129, 128, 128, 20); //boss 1
+            super('enemyT3', (getRandomInt(WIDTH - 129)), -129, 128, 128, 20); //boss 1
             this.rapidTime = 200;
             this.periodOfShooting = 400;
             this.ballRadius = 8;
@@ -152,7 +202,7 @@ class Enemy extends Model {
             this.revard = 100;
         }
         if (tier == 4) {
-            super("Textures/enemy_t4.png", (getRandomInt(WIDTH - 129)), -129, 128, 128, 45); //boss 2
+            super('enemyT4', (getRandomInt(WIDTH - 129)), -129, 128, 128, 45); //boss 2
             this.rapidTime = 150;
             this.periodOfShooting = 200;
             this.ballRadius = 16;
@@ -160,7 +210,6 @@ class Enemy extends Model {
             this.revard = 500;
         }
         this.unicalIdent = totalCountEnemyCreated;
-        this.spriteBallWay = "Textures/green_ball.png";
         this.shootingTimer = 0;
         this.vector = {
             xVector: 1,
@@ -240,8 +289,8 @@ class Enemy extends Model {
     }
 }
 class Star extends Model {
-    constructor(spriteWay, xPosition, yPosition) {
-        super(spriteWay, xPosition - 2, yPosition, 4, 4);
+    constructor(xPosition, yPosition) {
+        super('star',xPosition - 2, yPosition, 4, 4);
     }
     move(dy) {
         this.position.y += dy;
@@ -251,8 +300,8 @@ class Star extends Model {
     }
 }
 class BallPlayer extends Model {
-    constructor(spriteWay, xPosition, yPosition) {
-        super(spriteWay, xPosition, yPosition, 8, 8);
+    constructor(xPosition, yPosition) {
+        super('ballPlayer',xPosition, yPosition, 8, 8);
     }
     move(dy) {
         this.position.y += dy;
@@ -265,7 +314,7 @@ class BallPlayer extends Model {
 }
 class BallEnemy extends Model {
     constructor(xPosition, yPosition, radius = 8) {
-        super("Textures/green_ball.png", xPosition, yPosition, radius, radius);
+        super('ballEnemy',xPosition, yPosition, radius, radius);
     }
     move(dy = 2) {
         this.position.y += dy;
@@ -278,7 +327,7 @@ class BallEnemy extends Model {
 }
 var canvas = document.getElementById("myCanvas");
 var ctx = canvas.getContext("2d");
-player = new Player("Textures/player_spryte.png", WIDTH / 2, HEIGHT - 100)
+player = new Player(WIDTH / 2, HEIGHT - 100)
 
 let rightPressed = false;
 let leftPressed = false;
@@ -439,7 +488,7 @@ function movePlayerByKeyboard(rightPressed, leftPressed, topPressed, botPressed)
     }
 }
 for (let i = 0; i < 50; i++) { //создаем звезды на фон.
-    let star = new Star('Textures/star.png', getRandomInt(WIDTH), getRandomInt(HEIGHT));
+    let star = new Star(getRandomInt(WIDTH), getRandomInt(HEIGHT));
     arrayStars.push(star);
 }
 
@@ -448,10 +497,10 @@ function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height); // очищаем поверхность
     for (let i = 0; i < 50; i++) { //рисуем и перемещаем звезды
         arrayStars[i].move(1);
-        arrayStars[i].draw(ctx);
+        Sprites.draw(arrayStars[i].getProperties());
     }
     if (isGameStart && !isGameEnd) { // если игра началась
-        if (totalCountEnemyCreated >= 15 && GAMESTAGE == 1) {
+        if (totalCountEnemyCreated >= 15 && GAMESTAGE == 2) {
             bossFight = true;
         }
         if (totalCountEnemyCreated >= 25 && GAMESTAGE == 2) {
@@ -487,8 +536,8 @@ function draw() {
             }
 
         }
-        if (getRandomInt(300) == 1 && GAMESTAGE == 4 && enemyes.length < 5 && bossFight) {
-            enemyes.push(new Enemy(1));
+        if (getRandomInt(300) == 1 && GAMESTAGE == 4 && enemyes.length < 6 && bossFight) {
+            enemyes.push(new Enemy(2));
         }
         for (let i = 0; i < enemyes.length; i++) { // каждый противник стреляем
             let newShotBall = enemyes[i].shoot();
@@ -498,9 +547,9 @@ function draw() {
         }
         shootTimer--; // FIX!
         if (shootTimer <= 0) { //FIX!
-            if (spacePressed || controlType == 2 ||controlType ==3 ) {
+            if (spacePressed || controlType == 2 || controlType == 3) {
                 shootTimer = 35;
-                playerShoots.push(new BallPlayer("Textures/blue_ball.png", (player.shootingPosition.x + player.position.x), (player.shootingPosition.y + player.position.y)))
+                playerShoots.push(new BallPlayer((player.shootingPosition.x + player.position.x), (player.shootingPosition.y + player.position.y)))
             }
         }
         let flag;
@@ -527,25 +576,25 @@ function draw() {
             }
         }
         movePlayerByKeyboard(rightPressed, leftPressed, topPressed, botPressed);// перемещаем игрока с клавиатуры
-        if (player.infinityTimer > 0) {
-            player.draw(ctx, true);
-        }// отрисовываем игрока.
-        else {
-            player.draw(ctx, false)
+        if (player.infinityTimer = 0) {
+            player.name = 'player';
         }
+        else{
+            Sprites.draw(player.getProperties());
+        }
+        player.infinityTimer--;
         for (let i = 0; i < enemyes.length; i++) {//отрисовываем и перемещаем врагов.
             enemyes[i].move();
-            enemyes[i].draw(ctx);
+            Sprites.draw(enemyes[i].getProperties());
         }
         for (let i = 0; i < playerShoots.length; i++) {//отрисовываем и перемещаем выстрелы игрока.
             if (playerShoots[i].move(-7)) {
                 playerShoots.splice(i, 1);
                 i--;
             } else {
-                playerShoots[i].draw(ctx);
+                Sprites.draw(playerShoots[i].getProperties());
             }
         }
-        player.infinityTimer--;
         for (let i = 0; i < enemyesShoots.length; i++) {//отрисовываем и перемещаем выстрелы врагов. Регистрируем попадания по игроку.
             if (enemyesShoots[i].move(4)) {
                 enemyesShoots.splice(i, 1);
@@ -565,11 +614,11 @@ function draw() {
                         player.health = 3;
                         break;
                     } else {
-                        player.infinityTimer = 100;
+                        player.infinityTimer = 150;
                     }
                 }
             } else {
-                enemyesShoots[i].draw(ctx);
+                Sprites.draw(enemyesShoots[i].getProperties());
             }
         }
         ctx.fillText(healthBar, 150, 30); //выводим состояние здоровья.
