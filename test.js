@@ -500,7 +500,7 @@ function draw() {
         Sprites.draw(arrayStars[i].getProperties());
     }
     if (isGameStart && !isGameEnd) { // если игра началась
-        if (totalCountEnemyCreated >= 15 && GAMESTAGE == 2) {
+        if (totalCountEnemyCreated >= 15 && GAMESTAGE == 1) {
             bossFight = true;
         }
         if (totalCountEnemyCreated >= 25 && GAMESTAGE == 2) {
