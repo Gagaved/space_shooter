@@ -517,13 +517,13 @@ function draw() {
         }
         if (!bossIsCreated && bossFight && enemyes.length == 0) {
             bossIsCreated = true;
-            if (GAMESTAGE == 2) {
+            if (GAMESTAGE == 1) {
                 enemyes.push(new Enemy(3));
                 GAMESTAGE++;
             } else if (GAMESTAGE == 2) {
                 enemyes.push(new Enemy(4))
                 GAMESTAGE++;
-            } else if (GAMESTAGE == 1) {
+            } else if (GAMESTAGE == 3) {
                 enemyes.push(new Enemy(4));
                 enemyes.push(new Enemy(4));
                 bossLeft = 2;
