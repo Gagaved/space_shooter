@@ -284,7 +284,11 @@ class Enemy extends Model {
             this.shootingTimer = 0;
         }
         if (this.shootingTimer < this.rapidTime) {
-            return new BallEnemy((this.shootingPosition.x + this.position.x), this.shootingPosition.y + this.position.y, this.ballRadius);
+            let xVectorShoot = 0;
+            if(this.tier >2){
+                xVectorShoot = this.vector.xVector
+            };
+            return new BallEnemy((this.shootingPosition.x + this.position.x), this.shootingPosition.y + this.position.y, this.ballRadius,xVectorShoot);
         }
     }
 }
@@ -313,11 +317,13 @@ class BallPlayer extends Model {
     }
 }
 class BallEnemy extends Model {
-    constructor(xPosition, yPosition, radius = 8) {
+    constructor(xPosition, yPosition, radius = 8,xvector) {
         super('ballEnemy',xPosition, yPosition, radius, radius);
+        this.xvector = xvector;
     }
     move(dy = 2) {
         this.position.y += dy;
+        this.position.x += this.xvector;
         if (this.position.y >= HEIGHT) {
             return true;
         } else {
@@ -511,13 +517,13 @@ function draw() {
         }
         if (!bossIsCreated && bossFight && enemyes.length == 0) {
             bossIsCreated = true;
-            if (GAMESTAGE == 1) {
+            if (GAMESTAGE == 2) {
                 enemyes.push(new Enemy(3));
                 GAMESTAGE++;
             } else if (GAMESTAGE == 2) {
                 enemyes.push(new Enemy(4))
                 GAMESTAGE++;
-            } else if (GAMESTAGE == 3) {
+            } else if (GAMESTAGE == 1) {
                 enemyes.push(new Enemy(4));
                 enemyes.push(new Enemy(4));
                 bossLeft = 2;
@@ -528,7 +534,7 @@ function draw() {
             bossIsCreated = false;
             bossFight = false
         }
-        if (getRandomInt(100) == 1 && enemyes.length < 5 && !bossFight) { // если не боссфайт то спавним обычных противников
+        if (getRandomInt(100) == 1 && enemyes.length < 6 && !bossFight) { // если не боссфайт то спавним обычных противников
             if (GAMESTAGE == 1) {
                 enemyes.push(new Enemy(1));
             } else if (GAMESTAGE >= 2) {
@@ -536,7 +542,7 @@ function draw() {
             }
 
         }
-        if (getRandomInt(300) == 1 && GAMESTAGE == 4 && enemyes.length < 6 && bossFight) {
+        if (getRandomInt(100) == 1 && GAMESTAGE == 4 && enemyes.length < 4 && bossFight) {
             enemyes.push(new Enemy(2));
         }
         for (let i = 0; i < enemyes.length; i++) { // каждый противник стреляем
@@ -576,7 +582,7 @@ function draw() {
             }
         }
         movePlayerByKeyboard(rightPressed, leftPressed, topPressed, botPressed);// перемещаем игрока с клавиатуры
-        if (player.infinityTimer = 0) {
+        if (player.infinityTimer == 0) {
             player.name = 'player';
         }
         else{
@@ -615,6 +621,7 @@ function draw() {
                         break;
                     } else {
                         player.infinityTimer = 150;
+                        player.name = 'playerShield';
                     }
                 }
             } else {
